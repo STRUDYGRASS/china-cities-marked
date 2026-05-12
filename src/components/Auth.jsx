@@ -41,31 +41,19 @@ function Auth({ onLoginSuccess }) {
 
     setLoading(true);
     try {
-      // 步骤 1: 查找用户是否已存在于 'users' 表
-      let { data: user, error } = await supabase
+      const { data: user, error } = await supabase
         .from('users')
         .select('id, username')
         .eq('username', username)
-        .single(); // .single() 会在找不到用户时返回一个特定错误
+        .single();
 
-      // 步骤 2: 如果找不到用户 (这是新用户注册的正常流程)
       if (error && error.code === 'PGRST116') {
-        // 插入新用户
-        const { data: newUser, error: insertError } = await supabase
-          .from('users')
-          .insert({ username: username })
-          .select('id, username')
-          .single();
-
-        if (insertError) throw insertError; // 如果插入失败，则抛出错误
-        
-        user = newUser; // 将新创建的用户信息赋给 user 变量
+        alert('用户不存在，请联系管理员开通账号。');
+        return;
       } else if (error) {
-        // 如果是其他未知数据库错误，则抛出
         throw error;
       }
 
-      // 步骤 3: 无论是找到的还是新创建的，都视为登录成功
       onLoginSuccess(user);
 
     } catch (error) {
