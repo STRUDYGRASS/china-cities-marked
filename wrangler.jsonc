@@ -1,0 +1,10 @@
+{
+  // 与现有 Worker 同名，Wrangler 据此更新该 Worker 而非新建/覆盖报错
+  "name": "china-cities-marked",
+  "compatibility_date": "2025-07-01",
+  // 用 Workers Assets 托管 Vite 构建产物（pnpm build 输出到 ./dist）
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
