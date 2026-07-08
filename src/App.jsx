@@ -29,6 +29,8 @@ function App() {
   // --- State 定义 ---
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')));
+  // 启动时校验 localStorage 缓存的 user 是否仍然有效（切换后端/用户被删等会导致 id 失效）
+  const [isValidatingUser, setIsValidatingUser] = useState(() => localStorage.getItem('user') !== null);
   const [visitedCities, setVisitedCities] = useState(new Map());
   const [cityLayers, setCityLayers] = useState({});
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -114,6 +116,32 @@ function App() {
       localStorage.removeItem('user');
     }
   }, [user, fetchVisitedCities]);
+
+  // 启动时校验缓存 user.id 是否仍存在于后端 users 表；失效则清缓存退回登录页，
+  // 避免带着无效 id 进入地图、直到保存时才触发外键报错
+  useEffect(() => {
+    if (!user) {
+      setIsValidatingUser(false);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from('users')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data) {
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+        setIsValidatingUser(false);
+      });
+    return () => { cancelled = true; };
+    // 仅在挂载时校验一次
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   const { globalWaterLat, provinceDataMap } = useMemo(() => {
@@ -316,6 +344,14 @@ function App() {
     }
   };
 
+
+  if (isValidatingUser) {
+    return (
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary, #333)' }}>
+        正在校验登录状态…
+      </div>
+    );
+  }
 
   if (!user) {
     return <Auth onLoginSuccess={setUser} />;
