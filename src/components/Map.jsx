@@ -137,21 +137,37 @@ const ProvincePolygon = ({ feature, progressData, onProvinceClick, colorMode, gl
     }
   }
 
+  // 在省 polygon 上绑常驻省名标签；hover 时切到「省名 + 进度」，移出还原
+  const bindProvinceLabel = (layer) => {
+    if (!layer || layer._labelBound) return;
+    layer._labelBound = true;
+    layer.bindTooltip(provinceName, { className: 'map-label', permanent: true, direction: 'center' });
+    layer.closeTooltip();
+    layer.on('mouseover', () => {
+      const t = layer.getTooltip();
+      if (t) t.setContent(tooltipText);
+    });
+    layer.on('mouseout', () => {
+      const t = layer.getTooltip();
+      if (t) t.setContent(provinceName);
+    });
+  };
+
   if (colorMode === 'single') {
     const provinceOwnProgress = progressData?.progress ?? 0;
     if (provinceOwnProgress <= 0) {
       return (
-        <Polygon positions={fullPositions} pathOptions={{ color: `rgb(${lineRgb})`, weight: 0.5, fillColor: 'transparent' }} eventHandlers={{ click: () => onProvinceClick(feature), mouseover: e => e.target.bindTooltip(tooltipText, { className: 'custom-tooltip', permanent: false, sticky: true }).openTooltip(), mouseout: e => e.target.closeTooltip() }} />
+        <Polygon positions={fullPositions} pathOptions={{ color: `rgb(${lineRgb})`, weight: 0.5, fillColor: 'transparent' }} ref={bindProvinceLabel} eventHandlers={{ click: () => onProvinceClick(feature) }} />
       );
     }
     const minColor = [202, 240, 248], maxColor = [0, 180, 216];
-    let p_remapped = 0; 
+    let p_remapped = 0;
     if (provinceOwnProgress > 0.5) p_remapped = (provinceOwnProgress - 0.5) * 2;
     const p_final = Math.pow(p_remapped, 0.6);
     const interpolateColor = minColor.map((start, i) => Math.round(start + (maxColor[i] - start) * p_final));
     const fillColor = `rgb(${interpolateColor.join(',')})`;
     return (
-      <Polygon positions={fullPositions} pathOptions={{ color: `rgb(${lineRgb})`, weight: 0.5, fillColor, fillOpacity: 1 }} eventHandlers={{ click: () => onProvinceClick(feature), mouseover: e => e.target.bindTooltip(tooltipText, { className: 'custom-tooltip', permanent: false, sticky: true }).openTooltip(), mouseout: e => e.target.closeTooltip() }} />
+      <Polygon positions={fullPositions} pathOptions={{ color: `rgb(${lineRgb})`, weight: 0.5, fillColor, fillOpacity: 1 }} ref={bindProvinceLabel} eventHandlers={{ click: () => onProvinceClick(feature) }} />
     );
   }
 
@@ -178,7 +194,7 @@ const ProvincePolygon = ({ feature, progressData, onProvinceClick, colorMode, gl
         {waterPositions.length > 0 && (
           <Polygon positions={waterPositions} pathOptions={{ color: 'transparent', weight: 0, fillColor: '#00b4d8', fillOpacity: 0.7 }} />
         )}
-        <Polygon positions={fullPositions} pathOptions={{ color: `rgb(${lineRgb})`, weight: 0.5, fillColor: 'transparent' }} eventHandlers={{ click: () => onProvinceClick(feature), mouseover: e => e.target.bindTooltip(tooltipText, { className: 'custom-tooltip', permanent: false, sticky: true }).openTooltip(), mouseout: e => e.target.closeTooltip() }} />
+        <Polygon positions={fullPositions} pathOptions={{ color: `rgb(${lineRgb})`, weight: 0.5, fillColor: 'transparent' }} ref={bindProvinceLabel} eventHandlers={{ click: () => onProvinceClick(feature) }} />
       </>
     );
   }
