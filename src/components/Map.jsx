@@ -71,9 +71,10 @@ function LabelVisibilityManager({ activeLayer }) {
 
     const evaluate = () => {
       map.eachLayer(layer => {
-        if (!layer.feature || typeof layer.getTooltip !== 'function') return;
+        if (typeof layer.getTooltip !== 'function') return;
         const tooltip = layer.getTooltip();
-        if (!tooltip) return;
+        if (!tooltip || !tooltip.options.permanent) return;
+        if (typeof layer.getBounds !== 'function') return;
         const bounds = layer.getBounds();
         const sw = map.latLngToContainerPoint(bounds.getSouthWest());
         const ne = map.latLngToContainerPoint(bounds.getNorthEast());
@@ -137,6 +138,9 @@ const ProvincePolygon = ({ feature, progressData, onProvinceClick, colorMode, gl
     }
   }
 
+  const latestTooltipText = useRef(tooltipText);
+  latestTooltipText.current = tooltipText;
+
   // 在省 polygon 上绑常驻省名标签；hover 时切到「省名 + 进度」，移出还原
   const bindProvinceLabel = (layer) => {
     if (!layer || layer._labelBound) return;
@@ -145,7 +149,7 @@ const ProvincePolygon = ({ feature, progressData, onProvinceClick, colorMode, gl
     layer.closeTooltip();
     layer.on('mouseover', () => {
       const t = layer.getTooltip();
-      if (t) t.setContent(tooltipText);
+      if (t) t.setContent(latestTooltipText.current);
     });
     layer.on('mouseout', () => {
       const t = layer.getTooltip();
