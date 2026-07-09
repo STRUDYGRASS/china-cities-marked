@@ -62,6 +62,53 @@ function ZoomHandler({ setActiveLayer, ZOOM_THRESHOLD, isZoomSwitchEnabled }) {
 }
 
 // ==============================
+// --- 地名标签显隐管理 (按 polygon 屏幕投影大小动态 toggle permanent tooltip) ---
+function LabelVisibilityManager({ activeLayer }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!map) return;
+    const minPx = activeLayer === 'city' ? CITY_LABEL_MIN_PX : PROVINCE_LABEL_MIN_PX;
+
+    const evaluate = () => {
+      map.eachLayer(layer => {
+        if (!layer.feature || typeof layer.getTooltip !== 'function') return;
+        const tooltip = layer.getTooltip();
+        if (!tooltip) return;
+        const bounds = layer.getBounds();
+        const sw = map.latLngToContainerPoint(bounds.getSouthWest());
+        const ne = map.latLngToContainerPoint(bounds.getNorthEast());
+        const w = Math.abs(ne.x - sw.x);
+        const h = Math.abs(ne.y - sw.y);
+        if (shouldShowLabel(w, h, minPx)) {
+          if (!tooltip.isOpen()) layer.openTooltip();
+        } else {
+          if (tooltip.isOpen()) layer.closeTooltip();
+        }
+      });
+    };
+
+    // 初始评估延一帧，确保省/市 polygon 已挂载
+    const raf = requestAnimationFrame(evaluate);
+    map.on('zoomend', evaluate);
+
+    let moveTimer = null;
+    const onMoveEnd = () => {
+      if (moveTimer) clearTimeout(moveTimer);
+      moveTimer = setTimeout(evaluate, 50);
+    };
+    map.on('moveend', onMoveEnd);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      map.off('zoomend', evaluate);
+      map.off('moveend', onMoveEnd);
+      if (moveTimer) clearTimeout(moveTimer);
+    };
+  }, [map, activeLayer]);
+  return null;
+}
+
+// ==============================
 // --- 省份多边形组件 (无变化) ---
 const ProvincePolygon = ({ feature, progressData, onProvinceClick, colorMode, globalWaterLat }) => {
   const provinceName = feature.properties.name;
@@ -199,6 +246,7 @@ function Map({
     <MapContainer center={[35, 105]} zoom={4} style={{ height: '100%', width: '100%' }} zoomControl={false} attributionControl={false}>
       <MapInstanceSetter />
       <ZoomHandler setActiveLayer={setActiveLayer} ZOOM_THRESHOLD={ZOOM_THRESHOLD} isZoomSwitchEnabled={isZoomSwitchEnabled} />
+      <LabelVisibilityManager activeLayer={activeLayer} />
       {/* 城市层 */}
       {cityGeojsonData && (!isZoomSwitchEnabled || activeLayer === 'city') && (
         <GeoJSON
