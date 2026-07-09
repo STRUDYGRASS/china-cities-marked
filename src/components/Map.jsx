@@ -21,6 +21,17 @@ function getColorfulColor(name) {
 }
 
 // ==============================
+// --- 地名标签显隐阈值 ---
+const CITY_LABEL_MIN_PX = 45;
+const PROVINCE_LABEL_MIN_PX = 35;
+const MIN_LABEL_AREA = 1600;
+
+// 判断某 polygon 的屏幕投影是否够大、能放下名字标签
+function shouldShowLabel(widthPx, heightPx, minPx) {
+  return Math.min(widthPx, heightPx) >= minPx && widthPx * heightPx >= MIN_LABEL_AREA;
+}
+
+// ==============================
 // --- 缩放处理组件 (无变化) ---
 function ZoomHandler({ setActiveLayer, ZOOM_THRESHOLD, isZoomSwitchEnabled }) {
   const map = useMap();
