@@ -24,6 +24,8 @@
   */
   --map-background: rgb(255, 255, 255);
   --map-line-color-rgb: 55, 65, 81; /* 一个沉稳的深灰色 (Tailwind Gray-700) */
+  /* 常驻地名标签文字色（描边保证在任意底色可读） */
+  --map-label-color: #ffffff;
 }
 
 /* --- 2. 深色模式 (黑色背景) --- */
@@ -45,6 +47,7 @@ html.dark {
   */
   --map-background: rgb(0, 0, 0);
   --map-line-color-rgb: 156, 163, 175; /* 一个清晰的浅灰色 (Tailwind Gray-400) */
+  --map-label-color: #f1f5f9;
 }
 
 /* 3. 全局样式 (无改动) */
@@ -72,3 +75,20 @@ html, body, #root {
     fill: rgba(0, 160, 200, 1);
   }
 } */
+
+/* --- 地图常驻地名标签 --- */
+.leaflet-tooltip.map-label {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--map-label-color);
+  font-weight: 600;
+  font-size: 11px;
+  padding: 0;
+  white-space: nowrap;
+  text-shadow: 0 0 3px #000, 0 0 2px #000, 1px 1px 1px #000;
+  z-index: 700;
+}
+.leaflet-tooltip.map-label::before {
+  display: none; /* 去掉 tooltip 默认小箭头 */
+}
