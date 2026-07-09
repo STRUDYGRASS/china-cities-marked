@@ -98,10 +98,17 @@ function LabelVisibilityManager({ activeLayer }) {
     };
     map.on('moveend', onMoveEnd);
 
+    const onLayerAdd = () => {
+      if (moveTimer) clearTimeout(moveTimer);
+      moveTimer = setTimeout(evaluate, 50);
+    };
+    map.on('layeradd', onLayerAdd);
+
     return () => {
       cancelAnimationFrame(raf);
       map.off('zoomend', evaluate);
       map.off('moveend', onMoveEnd);
+      map.off('layeradd', onLayerAdd);
       if (moveTimer) clearTimeout(moveTimer);
     };
   }, [map, activeLayer]);
@@ -205,42 +212,36 @@ function Map({
     }
   }, [activeLayer, cityGeojsonData, setCityLayers]);
 
-  // ▼▼▼ 【核心修改】在这里为城市添加悬停事件 ▼▼▼
   const onEachCityFeature = (feature, layer) => {
     const name = feature.properties.name;
-    
-    // 绑定悬浮提示 (Tooltip)
-    layer.bindTooltip(name, { className: 'custom-tooltip', permanent: false, follow: true, sticky: true });
 
-    // 绑定所有事件监听
+    // 常驻名字标签（由 LabelVisibilityManager 按图块大小动态显隐）
+    layer.bindTooltip(name, {
+      className: 'map-label',
+      permanent: true,
+      direction: 'center',
+    });
+    layer.closeTooltip(); // 初始隐藏，等 LabelVisibilityManager 评估
+
     layer.on({
-      // 鼠标移入事件
+      // 鼠标移入：仅未点亮的城市提高不透明度作高亮
       mouseover: (e) => {
-        const currentLayer = e.target;
-        // 仅当这个城市【未被】点亮时，才应用悬停效果
         if (!selectedCities.has(name)) {
-          currentLayer.setStyle({
-            fillOpacity: 0.4 // 设置一个半透明度作为高亮
-          });
+          e.target.setStyle({ fillOpacity: 0.4 });
         }
       },
-      // 鼠标移出事件
+      // 鼠标移出：恢复样式
       mouseout: (e) => {
-        const currentLayer = e.target;
-        // 仅当这个城市【未被】点亮时，才恢复其样式
         if (!selectedCities.has(name)) {
-          // 使用 resetStyle 可以安全地将其恢复到 <GeoJSON> 组件 style 属性定义的原始状态
-          cityGeoJsonRef.current.resetStyle(currentLayer);
+          cityGeoJsonRef.current.resetStyle(e.target);
         }
       },
-      // 点击事件 (保留原有逻辑)
-      click: e => {
-        e.target.closeTooltip();
+      // 点击：切换点亮
+      click: () => {
         onCityClick(name);
       },
     });
   };
-  // ▲▲▲ 【核心修改】结束 ▲▲▲
 
   return (
     <MapContainer center={[35, 105]} zoom={4} style={{ height: '100%', width: '100%' }} zoomControl={false} attributionControl={false}>
