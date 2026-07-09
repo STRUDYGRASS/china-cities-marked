@@ -1,4 +1,4 @@
-# pnpm 11 默认禁止依赖跑构建脚本（esbuild 等需要它来安装平台二进制）
-# 用 dangerouslyAllowAllBuilds 一律允许，避免 CI 的 ERR_PNPM_IGNORED_BUILDS
-# 注：pnpm 11 的审批字段已从 onlyBuiltDependencies(数组) 改为 allowBuilds(map)
-dangerouslyAllowAllBuilds: true
+# pnpm 11 默认禁止依赖跑构建脚本；这里显式批准需要的包
+# （v11 审批字段是 allowBuilds map，旧的 onlyBuiltDependencies 已移除）
+allowBuilds:
+  esbuild: true
