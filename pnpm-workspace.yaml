@@ -1,0 +1,4 @@
+# pnpm 11 的 settings 位置（从 package.json 迁移到这里）
+# 允许 esbuild 跑构建脚本以安装平台二进制
+onlyBuiltDependencies:
+  - esbuild
