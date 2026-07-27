@@ -297,6 +297,21 @@ function Map({
               globalWaterLat={globalWaterLat}
             />
           ))}
+          {/* 去过市染色叠加：省层显示「这个省我去过哪些市」；事件穿透到下层省 polygon */}
+          {cityGeojsonData && (
+            <GeoJSON
+              key={'province-city-overlay-' + [...selectedCities].join(',') + colorMode}
+              data={cityGeojsonData}
+              filter={feature => selectedCities.has(feature.properties.name)}
+              style={feature => ({
+                color: 'transparent',
+                weight: 0,
+                fillOpacity: 0.6,
+                fillColor: colorMode === 'single' ? '#48cae4' : getColorfulColor(feature.properties.name),
+              })}
+              onEachFeature={(feature, layer) => { layer.options.interactive = false; }}
+            />
+          )}
         </>
       )}
     </MapContainer>
