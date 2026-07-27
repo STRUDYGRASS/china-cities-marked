@@ -186,7 +186,7 @@ const ProvincePolygon = ({ feature, progressData, onProvinceClick, colorMode, gl
           const clipBbox = [minLng, minLat, maxLng, waterLatForClipping];
           const clippedFeature = turf.bboxClip(feature, clipBbox);
           if (clippedFeature.geometry.type === 'Polygon') {
-            waterPositions = L.GeoJSON.coordsToLatLngs(clippedFeature.geometry.coordinates, 1);
+            waterPositions = [L.GeoJSON.coordsToLatLngs(clippedFeature.geometry.coordinates, 1)];
           } else if (clippedFeature.geometry.type === 'MultiPolygon') {
             waterPositions = clippedFeature.geometry.coordinates.map(p => L.GeoJSON.coordsToLatLngs(p, 1));
           }
@@ -195,9 +195,9 @@ const ProvincePolygon = ({ feature, progressData, onProvinceClick, colorMode, gl
     }
     return (
       <>
-        {waterPositions.length > 0 && (
-          <Polygon positions={waterPositions} pathOptions={{ color: 'transparent', weight: 0, fillColor: '#00b4d8', fillOpacity: 0.7 }} />
-        )}
+        {waterPositions.map((rings, i) => (
+          <Polygon key={`water-${provinceName}-${i}`} positions={rings} pathOptions={{ color: 'transparent', weight: 0, fillColor: '#00b4d8', fillOpacity: 0.7 }} />
+        ))}
         <Polygon positions={fullPositions} pathOptions={{ color: `rgb(${lineRgb})`, weight: 0.5, fillColor: 'transparent' }} ref={bindProvinceLabel} eventHandlers={{ click: () => onProvinceClick(feature) }} />
       </>
     );
