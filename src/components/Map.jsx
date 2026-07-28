@@ -118,7 +118,7 @@ function LabelVisibilityManager({ activeLayer }) {
 
 // ==============================
 // --- 省份多边形组件 (无变化) ---
-const ProvincePolygon = ({ feature, progressData, onProvinceClick, colorMode, globalWaterLat }) => {
+const ProvincePolygon = ({ feature, progressData, onProvinceClick, colorMode }) => {
   const provinceName = feature.properties.name;
   const lineRgb = getComputedStyle(document.documentElement).getPropertyValue('--map-line-color-rgb').trim();
 
@@ -176,30 +176,9 @@ const ProvincePolygon = ({ feature, progressData, onProvinceClick, colorMode, gl
   }
 
   if (colorMode === 'colorful') {
-    let waterPositions = [];
-    if (globalWaterLat > 20) {
-      try {
-        const bbox = turf.bbox(feature);
-        const [minLng, minLat, maxLng, maxLat] = bbox;
-        const waterLatForClipping = Math.min(globalWaterLat, maxLat);
-        if (waterLatForClipping > minLat) {
-          const clipBbox = [minLng, minLat, maxLng, waterLatForClipping];
-          const clippedFeature = turf.bboxClip(feature, clipBbox);
-          if (clippedFeature.geometry.type === 'Polygon') {
-            waterPositions = [L.GeoJSON.coordsToLatLngs(clippedFeature.geometry.coordinates, 1)];
-          } else if (clippedFeature.geometry.type === 'MultiPolygon') {
-            waterPositions = clippedFeature.geometry.coordinates.map(p => L.GeoJSON.coordsToLatLngs(p, 1));
-          }
-        }
-      } catch (e) { console.error('Province water clip error:', provinceName, e); }
-    }
+    // 水位 feature 已移除（省层改用市染色 overlay 展示去过哪些市）
     return (
-      <>
-        {waterPositions.map((rings, i) => (
-          <Polygon key={`water-${provinceName}-${i}`} positions={rings} pathOptions={{ color: 'transparent', weight: 0, fillColor: '#00b4d8', fillOpacity: 0.7 }} />
-        ))}
-        <Polygon positions={fullPositions} pathOptions={{ color: `rgb(${lineRgb})`, weight: 0.5, fillColor: 'transparent' }} ref={bindProvinceLabel} eventHandlers={{ click: () => onProvinceClick(feature) }} />
-      </>
+      <Polygon positions={fullPositions} pathOptions={{ color: `rgb(${lineRgb})`, weight: 0.5, fillColor: 'transparent' }} ref={bindProvinceLabel} eventHandlers={{ click: () => onProvinceClick(feature) }} />
     );
   }
   return null;
@@ -210,7 +189,7 @@ const ProvincePolygon = ({ feature, progressData, onProvinceClick, colorMode, gl
 function Map({
   cityGeojsonData, provinceGeojsonData, selectedCities, setCityLayers,
   onCityClick, onProvinceClick, colorMode, provinceProgress, onMapLoad,
-  isZoomSwitchEnabled, globalWaterLat
+  isZoomSwitchEnabled
 }) {
   const [activeLayer, setActiveLayer] = useState('city');
   const cityGeoJsonRef = useRef(null);
@@ -294,7 +273,6 @@ function Map({
               progressData={provinceProgress.get(feature.properties.name)}
               onProvinceClick={onProvinceClick}
               colorMode={colorMode}
-              globalWaterLat={globalWaterLat}
             />
           ))}
           {/* 去过市染色叠加：省层显示「这个省我去过哪些市」；事件穿透到下层省 polygon */}

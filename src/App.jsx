@@ -144,18 +144,10 @@ function App() {
   }, []);
 
 
-  const { globalWaterLat, provinceDataMap } = useMemo(() => {
+  const { provinceDataMap } = useMemo(() => {
     if (!provinceGeojsonData?.features || !cityGeojsonData?.features || provinceToCitiesMap.size === 0) {
-      return { globalWaterLat: 20, provinceDataMap: new Map() };
+      return { provinceDataMap: new Map() };
     }
-
-    const totalCitiesInChina = new Set(cityGeojsonData.features.map(f => f.properties.name)).size;
-    const visitedCitiesCount = visitedCities.size;
-    const nationwideProgress = totalCitiesInChina > 0 ? visitedCitiesCount / totalCitiesInChina : 0;
-    const START_LAT = 20;
-    // 使用 turf 计算 bbox
-    const NORTHERNMOST_LAT = Math.max(...provinceGeojsonData.features.map(f => turf.bbox(f)[3]));
-    const globalWaterLat = START_LAT + nationwideProgress * (NORTHERNMOST_LAT - START_LAT);
 
     const provinceDataMap = new Map();
     for (const [provinceName, cities] of provinceToCitiesMap.entries()) {
@@ -182,7 +174,7 @@ function App() {
       });
     }
 
-    return { globalWaterLat, provinceDataMap };
+    return { provinceDataMap };
     
   }, [visitedCities, cityGeojsonData, provinceGeojsonData, provinceToCitiesMap]);
 
@@ -379,7 +371,6 @@ function App() {
         onProvinceClick={handleProvinceClick}
         colorMode={colorMode}
         provinceProgress={provinceDataMap}
-        globalWaterLat={globalWaterLat}
         onMapLoad={handleMapLoad}
         isZoomSwitchEnabled={isZoomSwitchEnabled}
       />
